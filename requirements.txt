@@ -1,0 +1,2 @@
+pytest
+pytest-json-report # 关键：生成符合要求的test-report.json
