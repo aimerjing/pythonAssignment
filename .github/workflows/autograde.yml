@@ -1,24 +1,36 @@
-   name: Autograding
-   
-   on: [push] 
-   
-   jobs:
-     autograde:
-       runs-on: ubuntu-latest
-       steps:
-         - name: Checkout code
-           uses: actions/checkout@v3
-             
-         - name: Set up Python
-           uses: actions/setup-python@v4
-           with:
-             python-version: '3.10'
-             
-         - name: Install dependencies
-           run: pip install pytest
-             
-         - name: Run tests
-           run: pytest test_main.py
-             
-         - name: Submit to Classroom
-           uses: education/autograding-action@v1
+name: Autograding
+
+on: [push] # 学生提交代码时触发
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt # 需包含pytest-json-report
+        
+      - name: Run tests (生成标准JSON报告) # 关键：使用pytest-json-report生成正确格式
+        run: |
+          pytest test_main.py \
+            --json-report \
+            --json-report-file=test-report.json \
+            --json-report-indent=2 # 可选：格式化报告以便阅读
+          
+      - name: Upload test results # 上传报告（必须与后续Action引用一致）
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results #  artifact名称，需与Submit步骤一致
+          path: test-report.json # 报告文件路径
+          
+      - name: Submit to Classroom # 提交结果（修正Action名称）
+        uses: education/autograding-action@v1 # 官方正确Action名称
+        with:
+          artifact_name: test-results # 必须与上传的artifact名称一致
